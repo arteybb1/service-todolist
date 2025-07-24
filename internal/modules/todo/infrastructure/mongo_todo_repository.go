@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/arteybb/service-todolist/internal/constants"
 	"github.com/arteybb/service-todolist/internal/modules/todo/domain"
 	"github.com/arteybb/service-todolist/internal/schema"
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,4 +88,21 @@ func (r *todoRepository) GetTodosByUserID(ctx context.Context, userID primitive.
 	}
 
 	return todos, nil
+}
+
+func (r *todoRepository) UpdateTodoById(ctx context.Context, todoID primitive.ObjectID, userID primitive.ObjectID, status constants.Status) error {
+	filter := bson.M{
+		"_id":     todoID,
+		"user_id": userID,
+	}
+
+	update := bson.M{
+		"$set": bson.M{"status": status},
+	}
+
+	_, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
 }

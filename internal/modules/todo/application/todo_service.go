@@ -72,3 +72,13 @@ func (s *TodoService) GetTodosByUserID(ctx context.Context, userIDHex string) ([
 
 	return res, nil
 }
+
+func (s *TodoService) UpdateTodoById(ctx context.Context, todoID primitive.ObjectID, userID primitive.ObjectID, status bool) error {
+	var statusStr constants.Status
+	if status {
+		statusStr = constants.DONE
+	} else {
+		statusStr = constants.PENDING
+	}
+	return s.todoRepo.UpdateTodoById(ctx, todoID, userID, statusStr)
+}

@@ -16,4 +16,5 @@ func TodoRoute(r *gin.RouterGroup, todoService *application.TodoService) {
 	group.GET(":id", handler.GetTodoById)
 	group.POST("create", handler.CreateTodo)
 	group.DELETE("delete/:id", handler.DeleteTodoById)
+	group.PUT("update/:id", handler.UpdateTodoStatus)
 }

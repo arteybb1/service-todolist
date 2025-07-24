@@ -6,6 +6,7 @@ import (
 	"github.com/arteybb/service-todolist/internal/modules/todo/application"
 	"github.com/arteybb/service-todolist/internal/modules/todo/application/dto"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type TodoHandler struct {
@@ -91,4 +92,45 @@ func (h *TodoHandler) GetTodosByUserID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"todos": todos})
+}
+
+func (h *TodoHandler) UpdateTodoStatus(c *gin.Context) {
+	todoIdParams := c.Param("id")
+	todoID, err := primitive.ObjectIDFromHex(todoIdParams)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid todo id"})
+		return
+	}
+
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user id not found"})
+		return
+	}
+
+	userIDStr, ok := userIDValue.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	userID, err := primitive.ObjectIDFromHex(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req dto.UpdateTodoStatusDTO
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.service.UpdateTodoById(c.Request.Context(), todoID, userID, req.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Todo status updated successfully"})
 }

@@ -33,7 +33,7 @@ func (s *AuthService) Login(ctx context.Context, loginDto dto.LoginDto) (*dto.To
 		return nil, errors.New("invalid credentials")
 	}
 
-	accessToken, err := s.generateToken(user, 10*time.Second)
+	accessToken, err := s.generateToken(user, 10*time.Minute)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*d
 		return nil, errors.New("user not found")
 	}
 
-	newAccessToken, err := s.generateToken(user, 10*time.Second)
+	newAccessToken, err := s.generateToken(user, 10*time.Minute)
 	if err != nil {
 		return nil, err
 	}
