@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  golang:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: service-todolist
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - mongodb
+      - redis
+    restart: always
+    env_file:
+      - .env
+
+  mongodb:
+    image: mongo:latest
+    container_name: golang_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: test
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:latest
+    container_name: golang_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mongodb_data:
+  redis_data:

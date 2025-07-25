@@ -12,6 +12,7 @@ type Config struct {
 	JWTSecretKey string
 	Port         string
 	BaseURL      string
+	RedisURL     string
 }
 
 var AppConfig *Config
@@ -26,6 +27,7 @@ func LoadConfig() {
 		JWTSecretKey: os.Getenv("JWT_SECRET_KEY"),
 		Port:         os.Getenv("PORT"),
 		BaseURL:      os.Getenv("BASE_URL"),
+		RedisURL:     os.Getenv("REDIS_URL"),
 	}
 }
 

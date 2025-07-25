@@ -33,7 +33,7 @@ func Route() *gin.Engine {
 	userService := userApplication.NewUserService(userRepo)
 
 	todoCol := config.MongoDB.Collection("todos")
-	todoRepo := todoInfrastructure.NewTodoRepository(todoCol)
+	todoRepo := todoInfrastructure.NewTodoRepository(todoCol, config.RedisClient)
 
 	todoService := application.NewTodoService(todoRepo)
 

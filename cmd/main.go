@@ -8,6 +8,8 @@ import (
 func main() {
 	config.LoadConfig()
 	config.MongoConfig()
+	config.RedisConfig()
+
 	r := router.Route()
 	r.Run(":" + config.AppConfig.Port)
 }
