@@ -1,20 +1,6 @@
 version: '3.8'
 
 services:
-  golang:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: service-todolist
-    ports:
-      - "${PORT}:${PORT}"
-    depends_on:
-      - mongodb
-      - redis
-    restart: always
-    env_file:
-      - .env
-
   mongodb:
     image: mongo:latest
     container_name: golang_mongodb

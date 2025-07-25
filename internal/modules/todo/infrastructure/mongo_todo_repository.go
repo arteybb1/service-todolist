@@ -45,10 +45,12 @@ func (r *todoRepository) GetAll(ctx context.Context) ([]schema.Todo, error) {
 
 func (r *todoRepository) Create(ctx context.Context, todo *schema.Todo) error {
 	_, err := r.collection.InsertOne(ctx, todo)
-	if err == nil {
-		_ = r.redisClient.Del(ctx, "todos:user:"+todo.UserID.Hex()).Err()
+	if err != nil {
+		return err
 	}
-	return err
+
+	_ = r.redisClient.Del(ctx, "todos:user:"+todo.UserID.Hex()).Err()
+	return nil
 }
 
 func (r *todoRepository) DeleteTodoById(ctx context.Context, id string) error {
@@ -57,17 +59,26 @@ func (r *todoRepository) DeleteTodoById(ctx context.Context, id string) error {
 		return errors.New("invalid id format")
 	}
 
+	var todo schema.Todo
+	err = r.collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&todo)
+	if err != nil {
+		return errors.New("todo not found")
+	}
+
 	res, err := r.collection.DeleteOne(ctx, bson.M{"_id": objID})
 	if err != nil {
 		return err
 	}
-
 	if res.DeletedCount == 0 {
 		return errors.New("todo not found")
 	}
 
-	_ = r.redisClient.Del(ctx, "todo:"+id).Err()
+	_ = r.redisClient.Del(ctx,
+		"todo:"+id,
+		"todos:user:"+todo.UserID.Hex(),
+	).Err()
 
+	log.Println("[Cache Invalidate] Redis keys deleted: todo:"+id, "todos:user:"+todo.UserID.Hex())
 	return nil
 }
 
@@ -103,6 +114,7 @@ func (r *todoRepository) GetTodoById(ctx context.Context, id string) (*schema.To
 func (r *todoRepository) GetTodosByUserID(ctx context.Context, userID primitive.ObjectID) ([]schema.Todo, error) {
 	cacheKey := "todos:user:" + userID.Hex()
 	var todos []schema.Todo
+
 	cached, err := r.redisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
 		if err := json.Unmarshal([]byte(cached), &todos); err == nil {
@@ -120,6 +132,7 @@ func (r *todoRepository) GetTodosByUserID(ctx context.Context, userID primitive.
 	if err := cursor.All(ctx, &todos); err != nil {
 		return nil, err
 	}
+
 	bytes, err := json.Marshal(todos)
 	if err == nil {
 		_ = r.redisClient.Set(ctx, cacheKey, bytes, 5*time.Minute).Err()
@@ -133,7 +146,6 @@ func (r *todoRepository) UpdateTodoById(ctx context.Context, todoID primitive.Ob
 		"_id":     todoID,
 		"user_id": userID,
 	}
-
 	update := bson.M{
 		"$set": bson.M{"status": status},
 	}
@@ -143,19 +155,25 @@ func (r *todoRepository) UpdateTodoById(ctx context.Context, todoID primitive.Ob
 		return err
 	}
 
-	err = r.redisClient.Del(ctx, "todo:"+todoID.Hex()).Err()
-	if err != nil {
-		log.Println("[Redis DEL Error] key:", "todo:"+todoID.Hex(), "error:", err)
-	} else {
-		log.Println("[Cache Invalidate] Redis key deleted:", "todo:"+todoID.Hex())
-	}
+	_ = r.redisClient.Del(ctx,
+		"todo:"+todoID.Hex(),
+		"todos:user:"+userID.Hex(),
+	).Err()
 
-	err = r.redisClient.Del(ctx, "todos:user:"+userID.Hex()).Err()
-	if err != nil {
-		log.Println("[Redis DEL Error] key:", "todos:user:"+userID.Hex(), "error:", err)
-	} else {
-		log.Println("[Cache Invalidate] Redis key deleted:", "todos:user:"+userID.Hex())
-	}
-
+	log.Println("[Cache Invalidate] Redis keys deleted: todo:"+todoID.Hex(), "todos:user:"+userID.Hex())
 	return nil
+}
+
+func (r *todoRepository) CountTodosByStatus(ctx context.Context, userID primitive.ObjectID, status constants.Status) (int, error) {
+	filter := bson.M{
+		"user_id": userID,
+		"status":  status,
+	}
+
+	count, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
 }

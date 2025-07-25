@@ -15,4 +15,5 @@ type TodoRepository interface {
 	DeleteTodoById(ctx context.Context, id string) error
 	GetTodosByUserID(ctx context.Context, userID primitive.ObjectID) ([]schema.Todo, error)
 	UpdateTodoById(ctx context.Context, todoID primitive.ObjectID, userID primitive.ObjectID, status constants.Status) error
+	CountTodosByStatus(ctx context.Context, userID primitive.ObjectID, status constants.Status) (int, error)
 }

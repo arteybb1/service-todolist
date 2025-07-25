@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/arteybb/service-todolist/internal/constants"
 	"github.com/arteybb/service-todolist/internal/modules/auth/application"
 	"github.com/arteybb/service-todolist/internal/modules/auth/application/dto"
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.TOKEN_REQUIRED})
 		return
 	}
 

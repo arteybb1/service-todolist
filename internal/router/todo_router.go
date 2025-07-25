@@ -14,6 +14,7 @@ func TodoRoute(r *gin.RouterGroup, todoService *application.TodoService) {
 	group.Use(middleware.JWTAuthMiddleware())
 	group.GET("", handler.GetTodosByUserID)
 	group.GET(":id", handler.GetTodoById)
+	group.GET("todo-pending", handler.GetTodosWithPendingCount)
 	group.POST("create", handler.CreateTodo)
 	group.DELETE("delete/:id", handler.DeleteTodoById)
 	group.PUT("update/:id", handler.UpdateTodoStatus)

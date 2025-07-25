@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/arteybb/service-todolist/internal/config"
+	"github.com/arteybb/service-todolist/internal/constants"
 	"github.com/arteybb/service-todolist/internal/modules/auth/application/dto"
 	"github.com/arteybb/service-todolist/internal/modules/user/application"
 	"github.com/arteybb/service-todolist/internal/schema"
@@ -26,11 +27,11 @@ func NewAuthService(userService *application.UserService) *AuthService {
 func (s *AuthService) Login(ctx context.Context, loginDto dto.LoginDto) (*dto.TokenPair, error) {
 	user, err := s.userService.GetByUsername(ctx, loginDto.Username)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, errors.New(string(constants.USER_NOT_FOUND))
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginDto.Password)); err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, errors.New(string(constants.INVALID_CREDENTIAL))
 	}
 
 	accessToken, err := s.generateToken(user, 10*time.Minute)
@@ -64,27 +65,27 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*d
 		return config.GetJWTSecret(), nil
 	})
 	if err != nil || !token.Valid {
-		return nil, errors.New("invalid refresh token")
+		return nil, errors.New(string(constants.INVALID_REFRESH_TOKEN))
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, errors.New("invalid claims")
+		return nil, errors.New(string(constants.INVALID_CLAIMS))
 	}
 
 	userIDStr, ok := claims["_id"].(string)
 	if !ok {
-		return nil, errors.New("invalid user id")
+		return nil, errors.New(string(constants.INVALID_ID))
 	}
 
 	userID, err := primitive.ObjectIDFromHex(userIDStr)
 	if err != nil {
-		return nil, errors.New("invalid user id format")
+		return nil, errors.New(string(constants.INVALID_ID_FORMAT))
 	}
 
 	user, err := s.userService.GetByID(ctx, userID)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, errors.New(string(constants.USER_NOT_FOUND))
 	}
 
 	newAccessToken, err := s.generateToken(user, 10*time.Minute)

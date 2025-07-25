@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/arteybb/service-todolist/internal/constants"
 	"github.com/arteybb/service-todolist/internal/modules/user/application"
 	"github.com/arteybb/service-todolist/internal/modules/user/application/dto"
 	"github.com/gin-gonic/gin"
@@ -43,20 +44,20 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "User created successfully",
+		"message": constants.CREATE_SUCCESS,
 	})
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user id not found in context"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": constants.USER_NOT_FOUND})
 		return
 	}
 
 	userID, ok := userIDValue.(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user id format"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": constants.INVALID_ID_FORMAT})
 		return
 	}
 
